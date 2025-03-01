@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String     @id @default(cuid())
+  photoURL String?    @unique
+  name     String
+  email    String     @unique
+  password String?
+  provider String?
+  points   Int        @default(0)
+  helped   Int        @default(0)
+  answered Int        @default(0)
+  Question Question[]
+  Answer   Answer[]
+  Comment  Comment[]
+  Like     Like[]
+  Hype     Hype[]
+}
+
+model Question {
+  id              String    @id @default(cuid())
+  title           String
+  content         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  owner           User      @relation(fields: [ownerId], references: [id])
+  ownerId         String
+  answers         Int
+  hypes           Int       @default(0)
+  subject         String
+  relatedAnswers  Answer[]
+  Comment         Comment[]
+  verfifiedAnswer String?
+  Hype            Hype[]
+}
+
+model Answer {
+  id              String    @id @default(cuid())
+  content         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  owner           User      @relation(fields: [ownerId], references: [id])
+  ownerId         String
+  question        Question  @relation(fields: [relatedQuestion], references: [id])
+  relatedQuestion String
+  likes           Int       @default(0)
+  Comment         Comment[]
+  Like            Like[]
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  Answer      Answer   @relation(fields: [relatedItem], references: [id])
+  Question    Question @relation(fields: [relatedItem], references: [id])
+  relatedItem String
+  likes       Int      @default(0)
+}
+
+model Like {
+  id            String @id @default(cuid())
+  User          User   @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  Answer        Answer @relation(fields: [relatedAnswer], references: [id])
+  relatedAnswer String
+}
+
+model Hype {
+  id              String   @id @default(cuid())
+  User            User     @relation(fields: [ownerId], references: [id])
+  ownerId         String
+  Question        Question @relation(fields: [relatedQuestion], references: [id])
+  relatedQuestion String
+}
