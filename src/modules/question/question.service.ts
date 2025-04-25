@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { AlreadyHypedQuestionError } from '../exceptions/AlreadyHypedQuestion';
+import { NeverHypedQuestionError } from '../exceptions/NeverHypedQuestion';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionRepository } from './repositories/question.repository';
+import { UnitOfWork } from './uow/unit-of-work';
 
 @Injectable()
 export class QuestionService {
-  constructor(private questionRepository: QuestionRepository) {}
+  constructor(
+    private questionRepository: QuestionRepository,
+    private readonly uow: UnitOfWork,
+  ) {}
 
   create(createQuestionDto: CreateQuestionDto & { ownerId: string }) {
     return this.questionRepository.create(createQuestionDto);
@@ -31,7 +37,58 @@ export class QuestionService {
     );
   }
 
+  hype(id: string, ownerId: string) {
+    try {
+      return this.uow.execute(
+        async ({ questionRepository, hypeRepository }, tx) => {
+          const [question, hype] = await Promise.all([
+            questionRepository.hype(id, tx),
+            hypeRepository.create(
+              {
+                relatedQuestion: id,
+                ownerId: ownerId,
+              },
+              tx,
+            ),
+          ]);
+
+          return { question, hype };
+        },
+      );
+    } catch {
+      throw new AlreadyHypedQuestionError();
+    }
+  }
+
+  unhype(ownerId: string, questionId: string) {
+    try {
+      return this.uow.execute(
+        async ({ questionRepository, hypeRepository }, tx) => {
+          const [question] = await Promise.all([
+            questionRepository.unhype(questionId, tx),
+            hypeRepository.delete(ownerId, questionId, tx),
+          ]);
+
+          return { question };
+        },
+      );
+    } catch {
+      throw new NeverHypedQuestionError();
+    }
+  }
+
   remove(id: string, requestId: string) {
-    return this.questionRepository.delete(id, requestId);
+    return this.uow.execute(
+      async ({ hypeRepository, questionRepository }, tx) => {
+        await Promise.all([
+          hypeRepository.deleteManyByQuestionId(id, tx),
+          questionRepository.delete(id, requestId, tx),
+        ]);
+      },
+    );
+  }
+
+  findManyByIdsArray(ids: string[]) {
+    return this.questionRepository.findManyByIdsArray(ids);
   }
 }
