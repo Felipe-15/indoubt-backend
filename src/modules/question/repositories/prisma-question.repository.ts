@@ -4,6 +4,7 @@ import { Question } from '../entities/question.entity';
 import { QuestionRepository } from './question.repository';
 import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaQuestionRepository implements QuestionRepository {
@@ -43,51 +44,83 @@ export class PrismaQuestionRepository implements QuestionRepository {
 
   async update(
     questionId: string,
-    requestId: string,
+    userId: string,
     data: UpdateQuestionDto,
   ): Promise<Question> {
     const originalQuestion = await this.prisma.question.findUnique({
       where: { id: questionId },
     });
-    const { isHyping, ...cleanedData } = data;
+
     const protectedFields = ['content', 'scholarship', 'subject'];
     if (
       Object.keys(data).some((key) => protectedFields.includes(key)) &&
-      originalQuestion?.ownerId !== requestId
+      originalQuestion?.ownerId !== userId
     ) {
       throw new UnauthorizedException('You are not allowed to update!');
     }
-
-    const hypeIncrement =
-      isHyping === true
-        ? 1
-        : isHyping === false
-          ? originalQuestion?.hypes
-            ? -1
-            : 0
-          : 0;
 
     const question = await this.prisma.question.update({
       where: {
         id: questionId,
       },
-      data: {
-        ...cleanedData,
-        hypes: {
-          increment: isHyping !== undefined ? hypeIncrement : 0,
-        },
-      },
+      data,
     });
 
     return question as Question;
   }
 
-  async delete(id: string, requestId: string): Promise<void> {
-    await this.prisma.question.delete({
+  async delete(
+    id: string,
+    userId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<Question> {
+    return tx.question.delete({
       where: {
         id,
-        ownerId: requestId,
+        ownerId: userId,
       },
-    });
+    }) as Promise<Question>;
+  }
+
+  async hype(
+    id: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<Question | null> {
+    return tx.question.update({
+      where: {
+        id,
+      },
+      data: {
+        hypes: {
+          increment: 1,
+        },
+      },
+    }) as Promise<Question>;
+  }
+
+  async unhype(
+    id: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<Question | null> {
+    return tx.question.update({
+      where: {
+        id,
+      },
+      data: {
+        hypes: {
+          decrement: 1,
+        },
+      },
+    }) as Promise<Question>;
+  }
+
+  async findManyByIdsArray(ids: string[]): Promise<Question[]> {
+    return this.prisma.question.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    }) as Promise<Question[]>;
   }
 }
