@@ -1,10 +1,12 @@
 export class Question {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  verifiedAnswer?: string;
-  answers: number;
-  hypes: number;
-  ownerId: string;
+  constructor(
+    public readonly id: string,
+    public content: string,
+    public createdAt: Date,
+    public answers: number,
+    public hypes: number,
+    public ownerId: string,
+    public updatedAt?: Date,
+    public verifiedAnswer?: string,
+  ) {}
 }
