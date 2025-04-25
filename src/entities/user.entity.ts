@@ -1,12 +1,14 @@
-export interface User {
-  id: string;
-  email: string;
-  password?: string;
-  name: string;
-  createdAt: Date;
-  provider?: string;
-  photoURL?: string;
-  points: number;
-  answered: number;
-  helped: number;
+export class User {
+  constructor(
+    public readonly id: string,
+    public email: string,
+    public name: string,
+    public createdAt: Date,
+    public points: number,
+    public answered: number,
+    public helped: number,
+    public password?: string,
+    public provider?: string,
+    public photoURL?: string,
+  ) {}
 }
