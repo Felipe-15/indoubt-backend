@@ -11,5 +11,8 @@ export abstract class QuestionRepository {
     requestId: string,
     data: UpdateQuestionDto,
   ): Promise<Question | null>;
-  abstract delete(id: string, requestId: string): Promise<void>;
+  abstract delete(id: string, userId: string, tx: unknown): Promise<Question>;
+  abstract hype(id: string, tx: unknown): Promise<Question | null>;
+  abstract unhype(id: string, tx: unknown): Promise<Question | null>;
+  abstract findManyByIdsArray(ids: string[]): Promise<Question[]>;
 }
