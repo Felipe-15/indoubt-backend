@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { HypeRepository } from './hype.repository';
 import { Hype } from '../hype.entity';
-import { CreateHypeDto } from '../dto/create-hype';
+import { CreateHypeDto } from '../dto/create-hype.dto';
 
 export class PrismaHypeRepository implements HypeRepository {
   constructor(private prisma: PrismaClient) {}

@@ -1,5 +1,5 @@
 import { Hype } from '../hype.entity';
-import { CreateHypeDto } from '../dto/create-hype';
+import { CreateHypeDto } from '../dto/create-hype.dto';
 
 export abstract class HypeRepository {
   abstract create(data: CreateHypeDto, tx: unknown): Promise<Hype>;
