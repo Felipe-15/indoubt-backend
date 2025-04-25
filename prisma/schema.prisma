@@ -74,17 +74,17 @@ model Comment {
 }
 
 model Like {
-  id            String @id @default(cuid())
+  @@id ([ownerId, relatedAnswer])
   User          User   @relation(fields: [ownerId], references: [id])
-  ownerId       String
+  ownerId       String 
   Answer        Answer @relation(fields: [relatedAnswer], references: [id])
-  relatedAnswer String
+  relatedAnswer String 
 }
 
 model Hype {
-  id              String   @id @default(cuid())
+  @@id ([ownerId, relatedQuestion])
   User            User     @relation(fields: [ownerId], references: [id])
-  ownerId         String
+  ownerId         String 
   Question        Question @relation(fields: [relatedQuestion], references: [id])
   relatedQuestion String
 }
